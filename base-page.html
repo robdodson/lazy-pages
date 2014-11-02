@@ -2,8 +2,9 @@
 <polymer-element name="base-page">
   <script>
     Polymer({
-      ready: function() {
+      loaded: function() {
         this.loaded = true;
+        this.fire('lazy-loaded');
       }
     });
   </script>
