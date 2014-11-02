@@ -1,0 +1,78 @@
+<!--
+    @license
+    Copyright (c) 2014 The Polymer Project Authors. All rights reserved.
+    This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+    The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+    The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+    Code distributed by Google as part of the polymer project is also
+    subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../polymer/polymer.html">
+
+<!--
+Element providing material design circular spinner.
+
+##### Example
+
+    <paper-spinner id="spinner" active></paper-spinner>
+
+@element paper-spinner
+@blurb Element providing material design circular spinner.
+@status alpha
+@homepage http://polymerlabs.github.io/paper-spinner
+-->
+
+<polymer-element name="paper-spinner" attributes="active">
+
+  <template>
+    <link rel="stylesheet" href="paper-spinner.css">
+
+    <div id="container">
+      <div class="circle-container">
+        <div class="circle-clipper">
+          <div class="circle left blue" fit></div>
+          <div class="circle left red" fit></div>
+          <div class="circle left yellow" fit></div>
+          <div class="circle left green" fit></div>
+        <!-- No space between div.circle-clipper. -->
+        </div><div class="circle-clipper">
+          <div class="circle right blue" fit></div>
+          <div class="circle right red" fit></div>
+          <div class="circle right yellow" fit></div>
+          <div class="circle right green" fit></div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    Polymer({
+      eventDelegates: {
+        'animationend': 'reset',
+        'webkitAnimationEnd': 'reset'
+      },
+      publish: {
+        /**
+         * Displays the spinner.
+         *
+         * @attribute active
+         * @type boolean
+         * @default false
+         */
+        active: {value: false, reflect: true}
+      },
+
+      activeChanged: function() {
+        if (this.active) {
+          this.$.container.classList.add('active');
+        } else {
+          this.$.container.classList.add('warmdown');
+        }
+      },
+
+      reset: function() {
+        this.$.container.classList.remove('active', 'warmdown');
+      }
+    });
+  </script>
+</polymer-element>
