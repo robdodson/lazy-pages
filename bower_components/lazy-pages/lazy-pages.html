@@ -72,10 +72,15 @@ An easy way to combine `lazy-pages` with a router is to bind the `selected` attr
     :host {
       position: initial;
     }
+    #overlay {
+      background-color: #FFF;
+      opacity: 1;
+    }
   </style>
   <shadow></shadow>
 
   <div fit layout vertical center-center>
+    <div hidden?="{{!loading}}" id="overlay" fit></div>
     <paper-spinner active?="{{loading}}"></paper-spinner>
   </div>
 </template>
@@ -90,17 +95,24 @@ An easy way to combine `lazy-pages` with a router is to bind the `selected` attr
         return;
       }
 
+      page.addEventListener('lazy-loaded', this.onPageLoaded.bind(this));
+
       this.loading = true;
 
-      // Can't use page.import because element definition may not be loaded yet
-      // and .import property won't exist.
+      // Can't use page.path because element definition may not be loaded yet
+      // and .path property won't exist.
       var path = page.getAttribute('path');
       Polymer.import([path], function(e) {
 
-        this.loading = false;
+        // import is ready at this point but page may still
+        // be doing work
 
       }.bind(this));
 
+    },
+    onPageLoaded: function(e) {
+      e.target.removeEventListener('lazy-loaded', this.onPageLoaded);
+      this.loading = false;
     }
   });
 </script>
