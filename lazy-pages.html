@@ -17,7 +17,7 @@ Lazy loads child "pages". A child page must have a `path` attribute with a url p
 Child pages should either extend `base-page.html` or implement their own `loaded` property. If you're extending `base-page.html`, remember to call `this.super()` in your `ready` callback.
 
 ##### Example child page
-    <link rel="import" href="base-page.html">
+    <link rel="import" href="../bower_components/lazy-pages/base-page.html">
     <polymer-element name="one-page" extends="base-page">
       <template>
         <style>
