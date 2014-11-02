@@ -1,0 +1,107 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../core-pages/core-pages.html">
+<link rel="import" href="../paper-spinner/paper-spinner.html">
+
+<!--
+Lazy loads child "pages". A child page must have a `path` attribute with a url pointing to their element definition.
+
+<br>
+<em>Note: I stole all of this code from <a href="//github.com/ebidel">@ebidel</a>. mwahahah!</em>
+
+##### Example
+    <lazy-pages selected="0" fit>
+      <one-page path="elements/one-page.html"></one-page>
+      <two-page path="elements/two-page.html"></two-page>
+    </lazy-pages>
+
+Child pages should either extend `base-page.html` or implement their own `loaded` property. If you're extending `base-page.html`, remember to call `this.super()` in your `ready` callback.
+
+##### Example child page
+    <link rel="import" href="base-page.html">
+    <polymer-element name="one-page" extends="base-page">
+      <template>
+        <style>
+          :host {
+            display: block;
+          }
+        </style>
+        <h1>One page</h1>
+      </template>
+      <script>
+        Polymer({
+          ready: function() {
+            this.super();
+          }
+        });
+      </script>
+    </polymer-element>
+
+When a new page is loading, a [paper-spinner](http://polymerlabs.github.io/paper-spinner/components/paper-spinner/) element will be displayed to indicate progress.
+
+An easy way to combine `lazy-pages` with a router is to bind the `selected` attribute of `lazy-pages` to the current route. Then give each child a corresponding `route` attribute. The `valueattr` attribute on `lazy-pages` instructs it to use the childrens' `route` attribute when deciding which item is currently selected.
+##### Example combine with router
+    <template is="auto-binding">
+      <flatiron-director route="{{route}}" autoHash></flatiron-director>
+
+      <lazy-pages selected="{{route}}" valueattr="route" fit>
+        <one-page route="one" path="elements/one-page.html"></one-page>
+        <two-page route="two" path="elements/two-page.html"></two-page>
+      </lazy-pages>
+    </template>
+
+    <script>
+      var t = document.querySelector('template');
+
+      t.addEventListener('template-bound', function() {
+
+        var DEFAULT_ROUTE = 'one';
+        t.route = this.$.router.route || DEFAULT_ROUTE;
+
+      });
+    </script>
+
+@element lazy-pages
+@extends core-pages
+@status alpha
+@homepage http://robdodson.github.io/lazy-pages
+-->
+
+<polymer-element name="lazy-pages" extends="core-pages">
+<template>
+  <style>
+    :host {
+      position: initial;
+    }
+  </style>
+  <shadow></shadow>
+
+  <div fit layout vertical center-center>
+    <paper-spinner active?="{{loading}}"></paper-spinner>
+  </div>
+</template>
+<script>
+  Polymer({
+    selectedChanged: function(oldVal,newVal) {
+      this.super();
+
+      var page = this.selectedItem;
+
+      if (!this.selected || page.loaded) {
+        return;
+      }
+
+      this.loading = true;
+
+      // Can't use page.import because element definition may not be loaded yet
+      // and .import property won't exist.
+      var path = page.getAttribute('path');
+      Polymer.import([path], function(e) {
+
+        this.loading = false;
+
+      }.bind(this));
+
+    }
+  });
+</script>
+</polymer-element>

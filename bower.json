@@ -1,0 +1,24 @@
+{
+  "name": "lazy-pages",
+  "version": "0.0.0",
+  "keywords": [
+    "seed",
+    "polymer",
+    "web-components"
+  ],
+  "main": "lazy-pages.html",
+  "dependencies": {
+    "polymer": "Polymer/polymer#^0.4.0",
+    "core-pages": "Polymer/core-pages#^0.4.0",
+    "paper-spinner": "PolymerLabs/paper-spinner"
+  },
+  "devDependencies": {
+    "polymer-test-tools": "Polymer/polymer-test-tools#^0.4.0",
+    "core-toolbar": "Polymer/core-toolbar#~0.4.2",
+    "core-header-panel": "Polymer/core-header-panel#~0.4.2",
+    "flatiron-director": "PolymerLabs/flatiron-director#~0.4.0",
+    "core-drawer-panel": "Polymer/core-drawer-panel#~0.4.2",
+    "core-menu": "Polymer/core-menu#~0.4.2",
+    "core-item": "Polymer/core-item#~0.4.2"
+  }
+}
