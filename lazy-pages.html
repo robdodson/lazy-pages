@@ -72,6 +72,9 @@ An easy way to combine `lazy-pages` with a router is to bind the `selected` attr
     :host {
       position: initial;
     }
+    #cover {
+      pointer-events: none;
+    }
     #overlay {
       background-color: #FFF;
       opacity: 1;
@@ -79,7 +82,7 @@ An easy way to combine `lazy-pages` with a router is to bind the `selected` attr
   </style>
   <shadow></shadow>
 
-  <div fit layout vertical center-center>
+  <div id="cover" fit layout vertical center-center>
     <div hidden?="{{!loading}}" id="overlay" fit></div>
     <paper-spinner active?="{{loading}}"></paper-spinner>
   </div>
