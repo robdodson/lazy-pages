@@ -20,5 +20,10 @@
     "core-drawer-panel": "Polymer/core-drawer-panel#~0.4.2",
     "core-menu": "Polymer/core-menu#~0.4.2",
     "core-item": "Polymer/core-item#~0.4.2"
+  },
+  "resolutions": {
+    "polymer": "^0.4.0",
+    "core-component-page": "^0.4.0",
+    "platform": "^0.4.0"
   }
 }
