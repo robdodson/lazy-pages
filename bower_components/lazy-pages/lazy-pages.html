@@ -41,7 +41,7 @@ When a new page is loading, a [paper-spinner](http://polymerlabs.github.io/paper
 An easy way to combine `lazy-pages` with a router is to bind the `selected` attribute of `lazy-pages` to the current route. Then give each child a corresponding `route` attribute. The `valueattr` attribute on `lazy-pages` instructs it to use the childrens' `route` attribute when deciding which item is currently selected.
 ##### Example combine with router
     <template is="auto-binding">
-      <flatiron-director route="{{route}}" autoHash></flatiron-director>
+      <flatiron-director id="router" route="{{route}}" autoHash></flatiron-director>
 
       <lazy-pages selected="{{route}}" valueattr="route" fit>
         <one-page route="one" path="elements/one-page.html"></one-page>
