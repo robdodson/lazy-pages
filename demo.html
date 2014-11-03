@@ -13,7 +13,6 @@
   <link rel="import" href="../core-icon-button/core-icon-button.html">
   <link rel="import" href="../core-menu/core-menu.html">
   <link rel="import" href="../core-item/core-item.html">
-  <link rel="import" href="../flatiron-director/flatiron-director.html">
   <link rel="import" href="lazy-pages.html">
 
   <style>
@@ -26,29 +25,19 @@
 <body unresolved fullbleed layout vertical>
 
   <template is="auto-binding">
-    <core-drawer-panel id="drawerPanel">
-      <core-header-panel drawer>
-        <core-toolbar>Menu</core-toolbar>
-        <core-menu selected="{{route}}" valueattr="label"
-                   on-core-select="{{menuItemSelected}}">
-          <core-item label="foo"></core-item>
-          <core-item label="bar"></core-item>
-        </core-menu>
-      </core-header-panel>
-      <core-header-panel main>
-        <core-toolbar>
-          <core-icon-button icon="menu" on-tap="{{openDrawer}}"></core-icon-button>
-          <div>My App</div>
-        </core-toolbar>
+    <ul>
+      <li><a href="#/about">#/about</a></li>
+      <li><a href="#/contacts">#/contacts</a></li>
+      <!-- <li><a href="#/contacts/123">#/contacts/123</a></li>
+      <li><a href="#/contacts/123/delete/42">#/contacts/123/delete/42</a></li> -->
+    </ul>
+    <lazy-pages>
+      <one-page route="/about" path="elements/one-page.html">
+      </one-page>
 
-        <flatiron-director id="router" route="{{route}}" autoHash>
-        </flatiron-director>
-        <lazy-pages id="pages" selected="{{route}}" valueattr="route" fit>
-          <one-page route="foo" path="elements/one-page.html"></one-page>
-          <two-page route="bar" path="elements/two-page.html"></two-page>
-        </lazy-pages>
-      </core-header-panel>
-    </core-drawer-panel>
+      <two-page route="/contacts/:id" path="elements/two-page.html">
+      </two-page>
+    </lazy-pages>
 
   </template>
 
@@ -57,8 +46,8 @@
 
   t.addEventListener('template-bound', function() {
 
-    var DEFAULT_ROUTE = 'foo';
-    t.route = this.$.router.route || DEFAULT_ROUTE;
+    // var DEFAULT_ROUTE = 'foo';
+    // t.route = this.$.router.route || DEFAULT_ROUTE;
 
 
     this.openDrawer = function() {

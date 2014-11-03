@@ -16,7 +16,8 @@
     "flatiron-director": "PolymerLabs/flatiron-director#~0.4.0",
     "core-drawer-panel": "Polymer/core-drawer-panel#~0.4.2",
     "core-menu": "Polymer/core-menu#~0.4.2",
-    "core-item": "Polymer/core-item#~0.4.2"
+    "core-item": "Polymer/core-item#~0.4.2",
+    "director": "~1.2.2"
   },
   "devDependencies": {
     "polymer-test-tools": "Polymer/polymer-test-tools#^0.4.0"

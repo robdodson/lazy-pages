@@ -1,6 +1,7 @@
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../core-pages/core-pages.html">
 <link rel="import" href="../paper-spinner/paper-spinner.html">
+<link rel="import" href="director-import.html">
 
 <!--
 Lazy loads child "pages". A child page must have a `path` attribute with a url pointing to their element definition.
@@ -89,12 +90,34 @@ An easy way to combine `lazy-pages` with a router is to bind the `selected` attr
 </template>
 <script>
   Polymer({
+    ready: function() {
+      this.super();
+
+      var self = this;
+      var routes = {};
+      this.children.array().forEach(function(child, idx) {
+        var route = child.getAttribute('route');
+        routes[route] = function(childIndex) {
+          return function() {
+            console.log('set selected to', childIndex);
+            console.log(arguments);
+            self.selected = childIndex;
+          };
+        }(idx);
+      });
+
+      var router = Router(routes);
+      router.init();
+    },
     selectedChanged: function(oldVal,newVal) {
       this.super();
 
       var page = this.selectedItem;
 
-      if (!this.selected || page.loaded) {
+      console.log('this.selected', this.selected);
+      console.log('this.selectedItem', this.selectedItem);
+
+      if (this.selected === null || page.loaded) {
         return;
       }
 
@@ -109,6 +132,7 @@ An easy way to combine `lazy-pages` with a router is to bind the `selected` attr
 
         // import is ready at this point but page may still
         // be doing work
+        console.log('import succesful');
 
       }.bind(this));
 
