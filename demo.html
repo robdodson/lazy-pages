@@ -5,73 +5,84 @@
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
   <title>lazy-pages Demo</title>
 
-  <script src="../platform/platform.js"></script>
-  <link rel="import" href="../core-header-panel/core-header-panel.html">
-  <link rel="import" href="../core-toolbar/core-toolbar.html">
-  <link rel="import" href="../core-drawer-panel/core-drawer-panel.html">
-  <link rel="import" href="../core-icons/core-icons.html">
-  <link rel="import" href="../core-icon-button/core-icon-button.html">
-  <link rel="import" href="../core-menu/core-menu.html">
-  <link rel="import" href="../core-item/core-item.html">
-  <link rel="import" href="../flatiron-director/flatiron-director.html">
-  <link rel="import" href="lazy-pages.html">
+  <script src="../webcomponentsjs/webcomponents-lite.js"></script>
 
-  <style>
-  [drawer] {
-    background-color: white;
-  }
-  </style>
+  <link rel="import" href="../paper-styles/paper-styles-classes.html">
+
+  <link rel="import" href="../iron-selector/iron-selector.html">
+
+  <link rel="import" href="../paper-material/paper-material.html">
+  <link rel="import" href="../paper-header-panel/paper-header-panel.html">
+  <link rel="import" href="../paper-toolbar/paper-toolbar.html">
+  <link rel="import" href="../paper-drawer-panel/paper-drawer-panel.html">
+  <link rel="import" href="../iron-icons/iron-icons.html">
+  <link rel="import" href="../paper-icon-button/paper-icon-button.html">
+  <link rel="import" href="../paper-menu/paper-menu.html">
+  <link rel="import" href="../paper-item/paper-item.html">
+  <!--<link rel="import" href="../flatiron-director/flatiron-director.html">-->
+  <script src="../page/page.js"></script>
+  <link rel="import" href="lazy-pages.html">
 </head>
 
 <body unresolved fullbleed layout vertical>
 
-  <template is="auto-binding">
-    <core-drawer-panel id="drawerPanel">
-      <core-header-panel drawer>
-        <core-toolbar>Menu</core-toolbar>
-        <core-menu selected="{{route}}" valueattr="label"
-                   on-core-select="{{menuItemSelected}}">
-          <core-item label="foo"></core-item>
-          <core-item label="bar"></core-item>
-        </core-menu>
-      </core-header-panel>
-      <core-header-panel main>
-        <core-toolbar>
-          <core-icon-button icon="menu" on-tap="{{openDrawer}}"></core-icon-button>
+  <template is="dom-bind" id="app">
+    <paper-drawer-panel id="drawerPanel" forceNarrow>
+      <paper-header-panel drawer>
+        <paper-toolbar>
+          <span class="paper-font-title">Menu</span>
+        </paper-toolbar>
+        <paper-menu class="list" attr-for-selected="data-route" selected="{{route}}" on-iron-select="menuItemSelected">
+          <a data-route="foo" href="/foo">Foo</a>
+          <a data-route="bar" href="/bar">Bar</a>
+        </paper-menu>
+      </paper-header-panel>
+      <paper-header-panel main>
+        <paper-toolbar>
+          <paper-icon-button id="paperToggle" icon="menu" paper-drawer-toggle></paper-icon-button>
           <div>My App</div>
-        </core-toolbar>
+        </paper-toolbar>
 
-        <flatiron-director id="router" route="{{route}}" autoHash>
-        </flatiron-director>
-        <lazy-pages id="pages" selected="{{route}}" valueattr="route" fit>
-          <one-page route="foo" path="elements/one-page.html"></one-page>
-          <two-page route="bar" path="elements/two-page.html"></two-page>
+        <!--<flatiron-director id="router" route="{{route}}" autoHash>-->
+        <!--</flatiron-director>-->
+        <lazy-pages id="pages" selected="{{route}}" attr-for-selected="data-route" fit>
+          <one-page data-route="foo" path="elements/one-page.html"></one-page>
+          <two-page data-route="bar" path="elements/two-page.html"></two-page>
         </lazy-pages>
-      </core-header-panel>
-    </core-drawer-panel>
-
+      </paper-header-panel>
+    </paper-drawer-panel>
   </template>
 
   <script>
-  var t = document.querySelector('template');
+  var app = document.querySelector('#app');
 
-  t.addEventListener('template-bound', function() {
+  window.addEventListener('WebComponentsReady', function() {
+    page('/foo', function() {
+      app.route = 'foo';
+    });
 
-    var DEFAULT_ROUTE = 'foo';
-    t.route = this.$.router.route || DEFAULT_ROUTE;
+    page('/bar', function() {
+      app.route = 'bar';
+    });
 
-
-    this.openDrawer = function() {
-      this.$.drawerPanel.togglePanel();
-    };
-
-    this.menuItemSelected = function() {
-      this.$.drawerPanel.closeDrawer();
-    }
-
+    page({
+      hashbang: true
+    });
   });
+
+  app.addEventListener('dom-change', function() {
+    var DEFAULT_ROUTE = 'foo';
+    app.route = //this.$.router.route ||
+      DEFAULT_ROUTE;
+  });
+
+  app.openDrawer = function() {
+    this.$.drawerPanel.togglePanel();
+  };
+
+  app.menuItemSelected = function() {
+    this.$.drawerPanel.closeDrawer();
+  }
   </script>
-
 </body>
-
 </html>

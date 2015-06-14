@@ -1,0 +1,34 @@
+{
+  "name": "lazy-pages",
+  "version": "1.0.0",
+  "description": "Lazy loads child \"pages\"",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/robdodson/lazy-pages.git"
+  },
+  "keywords": [
+    "polymer",
+    "lazy",
+    "pages"
+  ],
+  "bugs": {
+    "url": "https://github.com/robdodson/lazy-pages/issues"
+  },
+  "homepage": "https://github.com/robdodson/lazy-pages",
+  "devDependencies": {
+    "browser-sync": "^2.7.7",
+    "gulp": "^3.8.5",
+    "gulp-changed": "^1.0.0",
+    "gulp-if": "^1.2.1",
+    "gulp-jshint": "^1.6.3",
+    "jshint-stylish": "^2.0.0",
+    "opn": "^1.0.0",
+    "web-component-tester": "^3.1.3"
+  }
+}
