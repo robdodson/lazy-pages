@@ -73,8 +73,14 @@ instructs it to use the childrens' `data-route` attribute when deciding which it
 <dom-module id="lazy-pages">
   <style>
     :host {
+      display: block;
       position: initial;
     }
+
+    :host > ::content > :not(.iron-selected) {
+      display: none;
+    }
+
     #cover {
       pointer-events: none;
     }
@@ -84,10 +90,12 @@ instructs it to use the childrens' `data-route` attribute when deciding which it
     }
   </style>
   <template>
-    <div id="cover" fit layout vertical center-center>
-      <div hidden="{{!loading}}" id="overlay" fit></div>
+    <content></content>
+    <div id="cover" class="fit layout vertical center-center">
+      <div id="overlay" class="fit" hidden$="{{!loading}}"></div>
       <paper-spinner active="{{loading}}"></paper-spinner>
     </div>
+
   </template>
   <script>
   Polymer({
@@ -96,16 +104,19 @@ instructs it to use the childrens' `data-route` attribute when deciding which it
       Polymer.IronResizableBehavior,
       Polymer.IronSelectableBehavior
     ],
-
+    properties: {
+      loading: {
+        value: true
+      }
+    },
     observers: [
       '_selectedPageChanged(selected)'
     ],
 
-    _selectedPageChanged: function(selected, old) {
+    _selectedPageChanged: function(selected) {
       this.async(this.notifyResize);
 
       var page = this.selectedItem;
-
       if (!this.selected || page.loaded) {
         return;
       }
@@ -117,11 +128,10 @@ instructs it to use the childrens' `data-route` attribute when deciding which it
       // Can't use page.path because element definition may not be loaded yet
       // and .path property won't exist.
       var path = page.getAttribute('path');
-      this.importHref(path, function(e) {
+      this.importHref(path, function (e) {
         // import is ready at this point as `e.target.import.documentElement`
         // but page may still be doing work
-          console.info('loaded page: ', e.target.import.documentElement);
-      }, function(e) {
+      }, function (e) {
         console.error('failed to load', path);
       });
     },

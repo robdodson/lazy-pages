@@ -7,7 +7,7 @@
 
   <script src="../webcomponentsjs/webcomponents-lite.js"></script>
 
-  <link rel="import" href="../paper-styles/paper-styles-classes.html">
+  <link rel="import" href="../paper-styles/paper-styles.html">
 
   <link rel="import" href="../iron-selector/iron-selector.html">
 
@@ -22,6 +22,30 @@
   <!--<link rel="import" href="../flatiron-director/flatiron-director.html">-->
   <script src="../page/page.js"></script>
   <link rel="import" href="lazy-pages.html">
+  <style>
+    /* I couldn't figure out how to get paper-item to update the URL */
+    paper-menu a {
+      text-decoration: none;
+      color: var(--menu-link-color);
+      display: -ms-flexbox;
+      display: -webkit-flex;
+      display: flex;
+      -ms-flex-direction: row;
+      -webkit-flex-direction: row;
+      flex-direction: row;
+      -ms-flex-align: center;
+      -webkit-align-items: center;
+      align-items: center;
+      font-family: 'Roboto', 'Noto', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 24px;
+      min-height: 48px;
+      padding: 0px 16px;
+    }
+  </style>
 </head>
 
 <body unresolved fullbleed layout vertical>
@@ -35,6 +59,8 @@
         <paper-menu class="list" attr-for-selected="data-route" selected="{{route}}" on-iron-select="menuItemSelected">
           <a data-route="foo" href="/foo">Foo</a>
           <a data-route="bar" href="/bar">Bar</a>
+          <!--<paper-item data-route="foo">Foo</paper-item>-->
+          <!--<paper-item data-route="bar">Bar</paper-item>-->
         </paper-menu>
       </paper-header-panel>
       <paper-header-panel main>
@@ -43,9 +69,7 @@
           <div>My App</div>
         </paper-toolbar>
 
-        <!--<flatiron-director id="router" route="{{route}}" autoHash>-->
-        <!--</flatiron-director>-->
-        <lazy-pages id="pages" selected="{{route}}" attr-for-selected="data-route" fit>
+        <lazy-pages id="pages" selected="{{route}}" attr-for-selected="data-route" class="fit">
           <one-page data-route="foo" path="elements/one-page.html"></one-page>
           <two-page data-route="bar" path="elements/two-page.html"></two-page>
         </lazy-pages>
@@ -65,15 +89,12 @@
       app.route = 'bar';
     });
 
+    // set default page
+    page.redirect('/', '/foo');
+
     page({
       hashbang: true
     });
-  });
-
-  app.addEventListener('dom-change', function() {
-    var DEFAULT_ROUTE = 'foo';
-    app.route = //this.$.router.route ||
-      DEFAULT_ROUTE;
   });
 
   app.openDrawer = function() {
