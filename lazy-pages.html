@@ -1,4 +1,5 @@
 <link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../neon-animation-runner-behavior.html">
 <link rel="import" href="../iron-pages/iron-pages.html">
 <link rel="import" href="../paper-spinner/paper-spinner.html">
 
@@ -65,8 +66,6 @@ instructs it to use the childrens' `data-route` attribute when deciding which it
     </script>
 
 @element lazy-pages
-@extends core-pages
-@status alpha
 @homepage http://robdodson.github.io/lazy-pages
 -->
 
@@ -77,8 +76,11 @@ instructs it to use the childrens' `data-route` attribute when deciding which it
       position: initial;
     }
 
-    :host > ::content > :not(.iron-selected) {
-      display: none;
+    :host > ::content > :not(.iron-selected):not(.neon-animating) {
+      display: none !important;
+    }
+    :host > ::content > .neon-animating {
+      pointer-events: none;
     }
 
     #cover {
@@ -95,14 +97,14 @@ instructs it to use the childrens' `data-route` attribute when deciding which it
       <div id="overlay" class="fit" hidden$="{{!loading}}"></div>
       <paper-spinner active="{{loading}}"></paper-spinner>
     </div>
-
   </template>
   <script>
   Polymer({
     is: 'lazy-pages',
     behaviors: [
       Polymer.IronResizableBehavior,
-      Polymer.IronSelectableBehavior
+      Polymer.IronSelectableBehavior,
+      Polymer.NeonAnimationRunnerBehavior
     ],
     properties: {
       loading: {
@@ -113,21 +115,71 @@ instructs it to use the childrens' `data-route` attribute when deciding which it
       '_selectedPageChanged(selected)'
     ],
 
-    _selectedPageChanged: function(selected) {
-      this.async(this.notifyResize);
+    listeners: {
+      'neon-animation-finish': '_onNeonAnimationFinish'
+    },
 
-      var page = this.selectedItem;
-      if (!this.selected || page.loaded) {
+    _selectedPageChanged: function(selected) {
+      // this.async(this.notifyResize);
+      if (!this.selected) {
         return;
       }
 
-      page.addEventListener('lazy-loaded', this.onPageLoaded.bind(this));
+      var selectedPage = this.selectedItem;
+      var oldPage = this._valueToItem(this._prevSelected) || false;
+      this._prevSelected = selected;
+
+      // insert safari fix.
+      this.animationConfig = [{
+        name: 'opaque-animation',
+        node: selectedPage
+      }];
+
+      // configure oldPage animations iff exists.
+      if (oldPage) {
+        // cancel the currently running animation if one is ongoing.
+        if (oldPage.classList.contains('neon-animating')) {
+          this._squelchNextFinishEvent = true;
+          this.cancelAnimation();
+          this._completeSelectedChanged();
+          this._squelchNextFinishEvent = false;
+        }
+
+        // configure the animation.
+        if (this.exitAnimation) {
+          this.animationConfig.push({
+            name: this.exitAnimation,
+            node: oldPage
+          });
+        } else if (oldPage.getAnimationConfig) {
+          this.animationConfig.push({
+            animatable: oldPage,
+            type: 'exit'
+          });
+        }
+
+        // display the oldPage during the transition.
+        oldPage.classList.add('neon-animating');
+      }
+
+      if (selectedPage.loaded) {
+        // on initial load and if animateInitialSelection is negated, simply display selectedPage.
+        if (!oldPage && !this.animateInitialSelection) {
+          this._completeSelectedChanged();
+        } else {
+          this._animateNewPage(oldPage);
+        }
+        return;
+      }
+
+      selectedPage.addEventListener('lazy-loaded', this.onPageLoaded.bind(this));
+      this.oldPage = oldPage;
 
       this.loading = true;
 
       // Can't use page.path because element definition may not be loaded yet
       // and .path property won't exist.
-      var path = page.getAttribute('path');
+      var path = selectedPage.getAttribute('path');
       this.importHref(path, function (e) {
         // import is ready at this point as `e.target.import.documentElement`
         // but page may still be doing work
@@ -139,6 +191,84 @@ instructs it to use the childrens' `data-route` attribute when deciding which it
     onPageLoaded: function(e) {
       e.target.removeEventListener('lazy-loaded', this.onPageLoaded);
       this.loading = false;
+      this._animateNewPage(this.oldPage);
+    },
+
+    _animateNewPage: function(oldPage) {
+      var selectedPage = this.selectedItem;
+
+      // configure selectedPage animations.
+      if (this.entryAnimation) {
+        this.animationConfig.push({
+          name: this.entryAnimation,
+          node: selectedPage
+        });
+      } else if (selectedPage.getAnimationConfig) {
+        this.animationConfig.push({
+          animatable: selectedPage,
+          type: 'entry'
+        });
+      }
+
+      // display the selectedPage during the transition.
+      selectedPage.classList.add('neon-animating');
+
+      // actually run the animations.
+      if (this.animationConfig.length > 1) {
+        // on first load, ensure we run animations only after element is attached.
+        if (!this.isAttached) {
+          this.async(function () {
+            this.playAnimation(undefined, {
+              fromPage: null,
+              toPage: selectedPage
+            });
+          });
+        } else {
+          this.playAnimation(undefined, {
+            fromPage: oldPage,
+            toPage: selectedPage
+          });
+        }
+      } else {
+        this._completeSelectedChanged(oldPage, selectedPage);
+      }
+    },
+
+    /**
+     * @param {Object=} oldPage
+     * @param {Object=} selectedPage
+     */
+    _completeSelectedChanged: function(oldPage, selectedPage) {
+      if (selectedPage) {
+        selectedPage.classList.remove('neon-animating');
+      }
+      if (oldPage) {
+        // oldPage.style.display = 'none';
+        oldPage.classList.remove('neon-animating');
+      }
+      if (!selectedPage || !oldPage) {
+        var nodes = Polymer.dom(this.$.content).getDistributedNodes();
+        for (var node, index = 0; node = nodes[index]; index++) {
+          node.classList && node.classList.remove('neon-animating');
+        }
+      }
+      this.async(this._notifyPageResize);
+    },
+
+    _onNeonAnimationFinish: function(event) {
+      if (this._squelchNextFinishEvent) {
+        this._squelchNextFinishEvent = false;
+        return;
+      }
+      this._completeSelectedChanged(event.detail.fromPage, event.detail.toPage);
+    },
+
+    _notifyPageResize: function() {
+      var selectedPage = this.selectedItem;
+      this.resizerShouldNotify = function(element) {
+        return element == selectedPage;
+      }
+      this.notifyResize();
     }
   });
   </script>
