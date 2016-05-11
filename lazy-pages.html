@@ -1,5 +1,5 @@
 <link rel="import" href="../polymer/polymer.html">
-<link rel="import" href="../neon-animation-runner-behavior.html">
+<link rel="import" href="../neon-animation/neon-animation-runner-behavior.html">
 <link rel="import" href="../iron-pages/iron-pages.html">
 <link rel="import" href="../paper-spinner/paper-spinner.html">
 
@@ -102,13 +102,16 @@ instructs it to use the childrens' `data-route` attribute when deciding which it
   Polymer({
     is: 'lazy-pages',
     behaviors: [
-      Polymer.IronResizableBehavior,
+//      Polymer.IronResizableBehavior,
       Polymer.IronSelectableBehavior,
       Polymer.NeonAnimationRunnerBehavior
     ],
     properties: {
       loading: {
         value: true
+      },
+      animated: {
+        type: Boolean
       }
     },
     observers: [
@@ -120,6 +123,7 @@ instructs it to use the childrens' `data-route` attribute when deciding which it
     },
 
     _selectedPageChanged: function(selected) {
+//console.info('_selectedPageChanged:', selected);
       // this.async(this.notifyResize);
       if (!this.selected) {
         return;
@@ -127,12 +131,18 @@ instructs it to use the childrens' `data-route` attribute when deciding which it
 
       var selectedPage = this.selectedItem;
       var oldPage = this._valueToItem(this._prevSelected) || false;
+      this.animateRight = this.indexOf(selectedPage) < this.indexOf(oldPage);
+      if (selectedPage == oldPage) {
+        return;
+      }
       this._prevSelected = selected;
 
+      if (this.animated) {
       // insert safari fix.
       this.animationConfig = [{
         name: 'opaque-animation',
         node: selectedPage
+        // timing: {duration: 1000, fill: 'forwards'}
       }];
 
       // configure oldPage animations iff exists.
@@ -147,8 +157,9 @@ instructs it to use the childrens' `data-route` attribute when deciding which it
 
         // configure the animation.
         if (this.exitAnimation) {
+//console.info('tab exit animation:', this._fixAnimationDirection(this.exitAnimation), oldPage);
           this.animationConfig.push({
-            name: this.exitAnimation,
+            name: this._fixAnimationDirection(this.exitAnimation),
             node: oldPage
           });
         } else if (oldPage.getAnimationConfig) {
@@ -160,6 +171,7 @@ instructs it to use the childrens' `data-route` attribute when deciding which it
 
         // display the oldPage during the transition.
         oldPage.classList.add('neon-animating');
+      }
       }
 
       if (selectedPage.loaded) {
@@ -194,15 +206,37 @@ instructs it to use the childrens' `data-route` attribute when deciding which it
       this._animateNewPage(this.oldPage);
     },
 
+    _fixAnimationDirection: function(original) {
+      if (this.animateRight) {
+        return original.replace(/left/, 'right').replace(/from-right/, 'from-left');
+      }
+      return original.replace(/right/, 'left').replace(/from-left/, 'from-right');
+    },
+
     _animateNewPage: function(oldPage) {
       var selectedPage = this.selectedItem;
+      if (!this.animated) {
+        this._completeSelectedChanged(oldPage, selectedPage);
+        return;
+      }
 
       // configure selectedPage animations.
       if (this.entryAnimation) {
+console.info('tab entry animation:', this._fixAnimationDirection(this.entryAnimation), selectedPage);
         this.animationConfig.push({
-          name: this.entryAnimation,
+          name: this._fixAnimationDirection(this.entryAnimation),
           node: selectedPage
-        });
+          // timing: {
+          //       duration: 200, fill: 'forwards'
+          //     }
+          // timing: {fill: 'forwards'}
+          // timing: {duration: 2000}
+        })
+        // this.animationConfig.push({
+        //   name: 'opaque-animation',
+        //   node: selectedPage,
+        //   // timing: {delay: 500, fill: 'forwards'}
+        // });
       } else if (selectedPage.getAnimationConfig) {
         this.animationConfig.push({
           animatable: selectedPage,
