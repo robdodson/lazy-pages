@@ -1,24 +1,28 @@
-<link rel="import" href="../base-page.html">
-<polymer-element name="one-page" extends="base-page">
+<link rel="import" href="../lazy-page-behavior.html">
+<dom-module id="one-page">
+  <style>
+    :host {
+      display: block;
+    }
+  </style>
   <template>
-    <style>
-      :host {
-        display: block;
-      }
-    </style>
-    <h1>One page</h1>
+    <h1>Page One</h1>
   </template>
   <script>
     Polymer({
+      is: 'one-page',
+      behaviors: [LazyPageBehavior],
       ready: function() {
         // Pretend to load a bunch of content
         setTimeout(function() {
           this.loaded();
         }.bind(this), 3000);
-      },
-      loaded: function() {
-        this.super();
+//      },
+//      loaded: function() {
+//        console.info('loaded one-page');
+//        this.loaded = true;
+//        this.fire('lazy-loaded');
       }
     });
   </script>
-</polymer-element>
+</dom-module>

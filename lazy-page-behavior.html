@@ -1,0 +1,13 @@
+<script>
+LazyPageBehaviorImpl = {
+    loaded: function() {
+        this.loaded = true;
+        this.fire('lazy-loaded');
+    }
+};
+
+LazyPageBehavior = [
+	LazyPageBehaviorImpl,
+	Polymer.NeonAnimatableBehavior
+];
+</script>

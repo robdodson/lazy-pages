@@ -1,5 +1,6 @@
 <link rel="import" href="../polymer/polymer.html">
-<link rel="import" href="../core-pages/core-pages.html">
+<link rel="import" href="../neon-animation/neon-animation-runner-behavior.html">
+<link rel="import" href="../iron-pages/iron-pages.html">
 <link rel="import" href="../paper-spinner/paper-spinner.html">
 
 <!--
@@ -14,36 +15,42 @@ Lazy loads child "pages". A child page must have a `path` attribute with a url p
       <two-page path="elements/two-page.html"></two-page>
     </lazy-pages>
 
-Child pages should either extend `base-page.html` or implement their own `loaded` property. If you're extending `base-page.html`, remember to call `this.super()` in your `ready` callback.
+Child pages should either include the `LazyPageBehavior` or implement their own `loaded` property.
+If you're including `LazyPageBehavior`, remember to call `this.super()` in your `ready` callback.
 
 ##### Example child page
-    <link rel="import" href="../bower_components/lazy-pages/base-page.html">
-    <polymer-element name="one-page" extends="base-page">
+    <link rel="import" href="../bower_components/lazy-pages/lazy-page-behavior.html">
+    <dom-module id="one-page">
+      <style>
+        :host {
+          display: block;
+        }
+      </style>
       <template>
-        <style>
-          :host {
-            display: block;
-          }
-        </style>
         <h1>One page</h1>
       </template>
       <script>
         Polymer({
+          is: 'one-page',
+          behaviors: [LazyPageBehavior],
           ready: function() {
             this.super();
           }
         });
       </script>
-    </polymer-element>
+    </dom-module>
 
-When a new page is loading, a [paper-spinner](http://polymerlabs.github.io/paper-spinner/components/paper-spinner/) element will be displayed to indicate progress.
+When a new page is loading, a [paper-spinner](https://elements.polymer-project.org/elements/paper-spinner) element
+will be displayed to indicate progress.
 
-An easy way to combine `lazy-pages` with a router is to bind the `selected` attribute of `lazy-pages` to the current route. Then give each child a corresponding `route` attribute. The `valueattr` attribute on `lazy-pages` instructs it to use the childrens' `route` attribute when deciding which item is currently selected.
+An easy way to combine `lazy-pages` with a router is to bind the `selected` attribute of `lazy-pages` to the current route.
+Then give each child a corresponding `route` attribute. The `attr-for-selected="data-route"` attribute on `lazy-pages`
+instructs it to use the childrens' `data-route` attribute when deciding which item is currently selected.
 ##### Example combine with router
-    <template is="auto-binding">
+    <template is="dom-bind">
       <flatiron-director id="router" route="{{route}}" autoHash></flatiron-director>
 
-      <lazy-pages selected="{{route}}" valueattr="route" fit>
+      <lazy-pages selected="{{route}}" attr-for-selected="data-route" fit>
         <one-page route="one" path="elements/one-page.html"></one-page>
         <two-page route="two" path="elements/two-page.html"></two-page>
       </lazy-pages>
@@ -52,26 +59,30 @@ An easy way to combine `lazy-pages` with a router is to bind the `selected` attr
     <script>
       var t = document.querySelector('template');
 
-      t.addEventListener('template-bound', function() {
-
+      t.addEventListener('dom-change', function() {
         var DEFAULT_ROUTE = 'one';
         t.route = this.$.router.route || DEFAULT_ROUTE;
-
       });
     </script>
 
 @element lazy-pages
-@extends core-pages
-@status alpha
 @homepage http://robdodson.github.io/lazy-pages
 -->
 
-<polymer-element name="lazy-pages" extends="core-pages">
-<template>
+<dom-module id="lazy-pages">
   <style>
     :host {
+      display: block;
       position: initial;
     }
+
+    :host > ::content > :not(.iron-selected):not(.neon-animating) {
+      display: none !important;
+    }
+    :host > ::content > .neon-animating {
+      pointer-events: none;
+    }
+
     #cover {
       pointer-events: none;
     }
@@ -80,43 +91,219 @@ An easy way to combine `lazy-pages` with a router is to bind the `selected` attr
       opacity: 1;
     }
   </style>
-  <shadow></shadow>
-
-  <div id="cover" fit layout vertical center-center>
-    <div hidden?="{{!loading}}" id="overlay" fit></div>
-    <paper-spinner active?="{{loading}}"></paper-spinner>
-  </div>
-</template>
-<script>
+  <template>
+    <content></content>
+    <div id="cover" class="fit layout vertical center-center">
+      <div id="overlay" class="fit" hidden$="{{!loading}}"></div>
+      <paper-spinner active="{{loading}}"></paper-spinner>
+    </div>
+  </template>
+  <script>
   Polymer({
-    selectedChanged: function(oldVal,newVal) {
-      this.super();
+    is: 'lazy-pages',
+    behaviors: [
+//      Polymer.IronResizableBehavior,
+      Polymer.IronSelectableBehavior,
+      Polymer.NeonAnimationRunnerBehavior
+    ],
+    properties: {
+      loading: {
+        value: true
+      },
+      animated: {
+        type: Boolean
+      }
+    },
+    observers: [
+      '_selectedPageChanged(selected)'
+    ],
 
-      var page = this.selectedItem;
+    listeners: {
+      'neon-animation-finish': '_onNeonAnimationFinish'
+    },
 
-      if (!this.selected || page.loaded) {
+    _selectedPageChanged: function(selected) {
+//console.info('_selectedPageChanged:', selected);
+      // this.async(this.notifyResize);
+      if (!this.selected) {
         return;
       }
 
-      page.addEventListener('lazy-loaded', this.onPageLoaded.bind(this));
+      var selectedPage = this.selectedItem;
+      var oldPage = this._valueToItem(this._prevSelected) || false;
+      this.animateRight = this.indexOf(selectedPage) < this.indexOf(oldPage);
+      if (selectedPage == oldPage) {
+        return;
+      }
+      this._prevSelected = selected;
+
+      if (this.animated) {
+      // insert safari fix.
+      this.animationConfig = [{
+        name: 'opaque-animation',
+        node: selectedPage
+        // timing: {duration: 1000, fill: 'forwards'}
+      }];
+
+      // configure oldPage animations iff exists.
+      if (oldPage) {
+        // cancel the currently running animation if one is ongoing.
+        if (oldPage.classList.contains('neon-animating')) {
+          this._squelchNextFinishEvent = true;
+          this.cancelAnimation();
+          this._completeSelectedChanged();
+          this._squelchNextFinishEvent = false;
+        }
+
+        // configure the animation.
+        if (this.exitAnimation) {
+//console.info('tab exit animation:', this._fixAnimationDirection(this.exitAnimation), oldPage);
+          this.animationConfig.push({
+            name: this._fixAnimationDirection(this.exitAnimation),
+            node: oldPage
+          });
+        } else if (oldPage.getAnimationConfig) {
+          this.animationConfig.push({
+            animatable: oldPage,
+            type: 'exit'
+          });
+        }
+
+        // display the oldPage during the transition.
+        oldPage.classList.add('neon-animating');
+      }
+      }
+
+      if (selectedPage.loaded) {
+        // on initial load and if animateInitialSelection is negated, simply display selectedPage.
+        if (!oldPage && !this.animateInitialSelection) {
+          this._completeSelectedChanged();
+        } else {
+          this._animateNewPage(oldPage);
+        }
+        return;
+      }
+
+      selectedPage.addEventListener('lazy-loaded', this.onPageLoaded.bind(this));
+      this.oldPage = oldPage;
 
       this.loading = true;
 
       // Can't use page.path because element definition may not be loaded yet
       // and .path property won't exist.
-      var path = page.getAttribute('path');
-      Polymer.import([path], function(e) {
-
-        // import is ready at this point but page may still
-        // be doing work
-
-      }.bind(this));
-
+      var path = selectedPage.getAttribute('path');
+      this.importHref(path, function (e) {
+        // import is ready at this point as `e.target.import.documentElement`
+        // but page may still be doing work
+      }, function (e) {
+        console.error('failed to load', path);
+      });
     },
+
     onPageLoaded: function(e) {
       e.target.removeEventListener('lazy-loaded', this.onPageLoaded);
       this.loading = false;
+      this._animateNewPage(this.oldPage);
+    },
+
+    _fixAnimationDirection: function(original) {
+      if (this.animateRight) {
+        return original.replace(/left/, 'right').replace(/from-right/, 'from-left');
+      }
+      return original.replace(/right/, 'left').replace(/from-left/, 'from-right');
+    },
+
+    _animateNewPage: function(oldPage) {
+      var selectedPage = this.selectedItem;
+      if (!this.animated) {
+        this._completeSelectedChanged(oldPage, selectedPage);
+        return;
+      }
+
+      // configure selectedPage animations.
+      if (this.entryAnimation) {
+console.info('tab entry animation:', this._fixAnimationDirection(this.entryAnimation), selectedPage);
+        this.animationConfig.push({
+          name: this._fixAnimationDirection(this.entryAnimation),
+          node: selectedPage
+          // timing: {
+          //       duration: 200, fill: 'forwards'
+          //     }
+          // timing: {fill: 'forwards'}
+          // timing: {duration: 2000}
+        })
+        // this.animationConfig.push({
+        //   name: 'opaque-animation',
+        //   node: selectedPage,
+        //   // timing: {delay: 500, fill: 'forwards'}
+        // });
+      } else if (selectedPage.getAnimationConfig) {
+        this.animationConfig.push({
+          animatable: selectedPage,
+          type: 'entry'
+        });
+      }
+
+      // display the selectedPage during the transition.
+      selectedPage.classList.add('neon-animating');
+
+      // actually run the animations.
+      if (this.animationConfig.length > 1) {
+        // on first load, ensure we run animations only after element is attached.
+        if (!this.isAttached) {
+          this.async(function () {
+            this.playAnimation(undefined, {
+              fromPage: null,
+              toPage: selectedPage
+            });
+          });
+        } else {
+          this.playAnimation(undefined, {
+            fromPage: oldPage,
+            toPage: selectedPage
+          });
+        }
+      } else {
+        this._completeSelectedChanged(oldPage, selectedPage);
+      }
+    },
+
+    /**
+     * @param {Object=} oldPage
+     * @param {Object=} selectedPage
+     */
+    _completeSelectedChanged: function(oldPage, selectedPage) {
+      if (selectedPage) {
+        selectedPage.classList.remove('neon-animating');
+      }
+      if (oldPage) {
+        // oldPage.style.display = 'none';
+        oldPage.classList.remove('neon-animating');
+      }
+      if (!selectedPage || !oldPage) {
+        var nodes = Polymer.dom(this.$.content).getDistributedNodes();
+        for (var node, index = 0; node = nodes[index]; index++) {
+          node.classList && node.classList.remove('neon-animating');
+        }
+      }
+      this.async(this._notifyPageResize);
+    },
+
+    _onNeonAnimationFinish: function(event) {
+      if (this._squelchNextFinishEvent) {
+        this._squelchNextFinishEvent = false;
+        return;
+      }
+      this._completeSelectedChanged(event.detail.fromPage, event.detail.toPage);
+    },
+
+    _notifyPageResize: function() {
+      var selectedPage = this.selectedItem;
+      this.resizerShouldNotify = function(element) {
+        return element == selectedPage;
+      }
+      this.notifyResize();
     }
   });
-</script>
-</polymer-element>
+  </script>
+</dom-module>

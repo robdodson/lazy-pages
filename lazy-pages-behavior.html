@@ -1,0 +1,40 @@
+<!--<script>
+LazyPagesBehavior = {
+	created: function() {
+		console.info('adding LazyPagesBehavior...', this._selectedChanged);
+		var original = this._selectedChanged;
+		this._selectedChanged = function(selected) {
+			this._selectedPageChanged(selected);
+			original(selected);
+		}
+	},
+
+	_selectedPageChanged: function(selected) {
+      // this.async(this.notifyResize);
+
+      var page = this.selectedItem;
+      if (!this.selected || page.loaded) {
+        return;
+      }
+
+      page.addEventListener('lazy-loaded', this.onPageLoaded.bind(this));
+
+      this.loading = true;
+
+      // Can't use page.path because element definition may not be loaded yet
+      // and .path property won't exist.
+      var path = page.getAttribute('path');
+      this.importHref(path, function (e) {
+        // import is ready at this point as `e.target.import.documentElement`
+        // but page may still be doing work
+      }, function (e) {
+        console.error('failed to load', path);
+      });
+    },
+
+    onPageLoaded: function(e) {
+      e.target.removeEventListener('lazy-loaded', this.onPageLoaded);
+      this.loading = false;
+    }
+}
+</script>-->
